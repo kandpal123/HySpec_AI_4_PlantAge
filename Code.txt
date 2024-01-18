@@ -1,0 +1,97 @@
+library(ggplot2)
+library(lattice)
+library(ranger)
+library(caret)
+library(C50)
+setwd("D:/Valeriana _Restart/Feature_Selected_Data/Revision_IJRS/Valeriana_revisoin/Github")
+
+#Input the spectra data
+train <- read.csv("Training_R.csv")
+Test <- read.csv("Testing_R.csv")
+
+set.seed(42)
+trainctrl <- trainControl(method = "cv", number = 20, verboseIter = TRUE, sampling ="up")
+
+#Run models
+#Random Forest
+rf.model <- train(Wavelength~., data=train, method = "ranger", 
+                  tuneLength = 20,
+                  num.trees = 500,
+                  preProcess = c("center", "scale"),
+                  trControl = trainctrl,
+                  metric="Kappa")
+plot(rf.model)
+
+# Support Vector Machine
+set.seed(42)
+svm.model <- train(Wavelength~., data=train, method = "svmRadial", 
+                   tuneLength = 10,
+                   preProcess = c("center", "scale"),
+                   trControl = trainctrl,
+                   metric="Kappa")
+plot(svm.model)
+
+#Decision Tree
+set.seed(42)
+tree.model <- train(Wavelength~., data=train, method = "rpart", 
+                    tuneLength = 10,
+                    preProcess = c("center", "scale"),
+                    trControl = trainctrl,
+                    metric="Kappa")
+plot(tree.model)
+
+# Boosting Tree
+set.seed(42)
+boost.model <- train(Wavelength~., data=train, method = "C5.0", 
+                     tuneLength = 10,
+                     preProcess = c("center", "scale"),
+                     trControl = trainctrl,
+                     metric="Kappa")
+plot(boost.model)
+
+#Neural Network
+set.seed(42)
+nnet.model <- train(Wavelength~., data=train, method = "nnet", 
+                    tuneLength = 20,
+                    preProcess = c("center", "scale"),
+                    trControl = trainctrl,
+                    metric="Kappa")
+
+plot(nnet.model)
+
+#k-nearest neighbors algorithm
+set.seed(42)
+knn.model <- train(Wavelength~., data=train, method = "knn",
+                   tuneLength = 13,
+                   preProcess = c("center", "scale"),
+                   trControl = trainctrl,
+                   metric="Kappa")
+plot(knn.model)
+
+
+#Predict test samples
+rf.predict <- predict(rf.model, Test)
+svm.predict <-predict(svm.model, Test[2:ncol(test)])
+tree.predict <-predict(tree.model, Test)
+boost.predict <- predict(boost.model, Test)
+nnet.predict <-predict(nnet.model, Test)
+knn.predict <-predict(knn.model, Test)
+
+##Create error matrix
+
+RF <- factor(rf.predict)
+TestR <- factor(Test$Wavelength)
+SVM <- factor(svm.predict)
+Tree <- factor(tree.predict)
+Boost <- factor(boost.predict)
+Nnet <- factor(nnet.predict)
+KNN <- factor(knn.predict) 
+
+confusionMatrix(RF, TestR)
+confusionMatrix(SVM, TestR)
+confusionMatrix(Tree, TestR)
+confusionMatrix(Boost, TestR)
+confusionMatrix(Nnet, TestR)
+confusionMatrix(KNN, TestR)
+
+
